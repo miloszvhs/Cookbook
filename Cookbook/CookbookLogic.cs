@@ -53,6 +53,19 @@ namespace Cookbook
             return false;
         }
 
+        private string CheckIfRecipeExistInList(string name)
+        {
+            while (Cookbook.Recipes.Select(x => x.Name).Contains(name))
+            {
+                Console.Write("There is a recipe like this. Please change the name of your new recipe: ");
+                name = Console.ReadLine();
+            }
+            return name;
+        }
+
+        /// <summary>
+        /// Add recipe to the list
+        /// </summary>
         public void AddRecipe()
         {
             Console.WriteLine();
@@ -62,11 +75,7 @@ namespace Cookbook
             Console.Write("What is your recipe name? ");
             string name = Console.ReadLine();
 
-            while (Cookbook.Recipes.Select(x => x.Name).Contains(name))
-            {
-                Console.Write("There is a recipe like this. Please change the name of your new recipe: ");
-                name = Console.ReadLine();
-            }
+            name = CheckIfRecipeExistInList(name);
 
             recipeItem.Name = name;
 
@@ -107,6 +116,9 @@ namespace Cookbook
             Cookbook.Recipes.Add(recipeItem);
         }
 
+        /// <summary>
+        /// Remove recipe by name of the recipe shown in the list
+        /// </summary>
         public void RemoveRecipeByName()
         {
             Console.WriteLine();
@@ -128,17 +140,11 @@ namespace Cookbook
             }
         }
 
-        public void ShowSelectedRecipeByName()
+        private void ShowRecipe(string name)
         {
-            Console.WriteLine();
-            Console.Write("Insert name of the recipe: ");
-            string userInput = Console.ReadLine();
-
-            Console.WriteLine();
-
             foreach (var recipe in Cookbook.Recipes)
             {
-                if (recipe.Name == userInput)
+                if (recipe.Name == name)
                 {
                     foreach (var (ingredient, index) in recipe.Ingredients.Select((x, i) => (x, i)))
                     {
@@ -151,6 +157,23 @@ namespace Cookbook
             }
         }
 
+        /// <summary>
+        /// Show details of recipe by name of the recipe shown in the list
+        /// </summary>
+        public void ShowSelectedRecipeByName()
+        {
+            Console.WriteLine();
+            Console.Write("Insert name of the recipe: ");
+            string userInput = Console.ReadLine();
+
+            Console.WriteLine();
+
+            ShowRecipe(userInput);
+        }
+
+        /// <summary>
+        /// Show recipes list
+        /// </summary>
         public void ShowRecipes()
         {
             Console.WriteLine();
@@ -191,9 +214,38 @@ namespace Cookbook
             }
         }
 
+        //TODO dokonczyc editRecipe
         public void EditRecipe()
         {
+            Console.Write("Pick recipe you want to edit: ");
+            string recipeName = Console.ReadLine();
 
+            if (Cookbook.Recipes.Select(x => x.Name).Contains(recipeName))
+            {
+                ShowRecipe(recipeName);
+
+                Console.WriteLine("What do you want to edit?");
+                MenuActionService.DrawMenuViewByMenuType("EditMenu");
+
+                var operation = Console.ReadKey();
+
+                switch (operation.KeyChar)
+                {
+                    case '1':
+                        break;
+                    case '2':
+                        break;
+                    case '3':
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                Console.WriteLine($"{recipeName} doesnt exist.");
+            }
+            
         }
 
         private MenuActionService Initialize()
@@ -208,6 +260,10 @@ namespace Cookbook
             menu.AddMenuView(2, "Remove recipe", "EditMenu");
             menu.AddMenuView(3, "Edit recipe", "EditMenu");
             menu.AddMenuView(4, "Leave", "EditMenu");
+
+            menu.AddMenuView(1, "Ingredients", "EditMenu");
+            menu.AddMenuView(2, "Description", "EditMenu");
+            menu.AddMenuView(3, "Both", "EditMenu");
 
             return menu;
         }
