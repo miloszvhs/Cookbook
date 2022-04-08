@@ -2,7 +2,7 @@
 
 namespace Cookbook
 {
-    internal class Program
+    public class Program
     {
         static void Main(string[] args)
         {
@@ -11,3 +11,16 @@ namespace Cookbook
         }
     }
 }
+
+///RecipeManager
+////1. AddRecipe
+////2. RemoveRecipe
+////3. EditRecipe
+////4. ShowRecipe
+////5. ShowRecipes
+///IngredientManager
+////1. AddIngredient
+////2. RemoveIngredient
+////3. EditIngredients
+////4. ShowIngredients
+///

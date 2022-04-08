@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cookbook
+namespace Cookbook.Domain.Common
 {
-    public class Cookbook
+    public class BaseEntity : AuditableModel
     {
-        public List<Recipe> Recipes { get; set; } = new List<Recipe>();
+        public int Id { get; set; }
     }
 }
