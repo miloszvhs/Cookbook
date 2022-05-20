@@ -1,5 +1,6 @@
 ﻿using Cookbook.App.Abstract;
 using Cookbook.App.Concrete;
+using Cookbook.App.Helpers;
 using Cookbook.Domain.Concrete;
 using Cookbook.Domain.Entity;
 using System;
@@ -14,9 +15,9 @@ namespace Cookbook.App.Managers
     {
         private readonly MenuActionService _menuActionService;
         private IngredientService _ingredientService;
-        private RecipeService _recipeService;
+        private IService<Recipe> _recipeService;
 
-        public IngredientManager(MenuActionService actionService, RecipeService recipeService)
+        public IngredientManager(MenuActionService actionService, IService<Recipe> recipeService)
         {
             _menuActionService = actionService;
             _ingredientService = new IngredientService();
@@ -27,11 +28,9 @@ namespace Cookbook.App.Managers
         {
             var recipe = GetRecipeById(id);
 
-            Console.WriteLine("How many ingredients do you want to add?");
+            TextAlert.Show(Types.InsertNumberOfIngredients);
 
-            int input;
-
-            int.TryParse(Console.ReadLine(), out input);
+            int input = Validation.ValidateInt();
 
             for (int i = 0; i < input; i++)
             {
@@ -51,18 +50,18 @@ namespace Cookbook.App.Managers
                 }
                 else
                 {
-                    Console.WriteLine($"Ingredient with the ID:{ingredientId} doesnt exist.");
+                    TextAlert.Show(Types.IncorrectId, 1);
                 }
             }
         }
 
         public int? GetIngredientId(int? recipeId)
         {
-            Console.Write("\nInsert your ingredient ID: ");
+            TextAlert.Show(Types.InsertId);
 
-            int id;
-            int.TryParse(Console.ReadLine(), out id);
-            Console.Clear();
+            int id = Validation.ValidateInt();
+
+            Validation.ValidateConsoleClearException();
 
             return id;
         }
@@ -72,28 +71,26 @@ namespace Cookbook.App.Managers
             var item = GetRecipeById(recipeId)
                 .Ingredients.FirstOrDefault(x => x.Id == ingredientId);
 
-            if (item != null)
+            if (item is not null)
             {
-                Console.Write($"Insert ingredient name: ");
+                TextAlert.Show(Types.InsertNameOfIngredient);
                 item.Name = Console.ReadLine();
 
-                Console.Write("Insert amount unit: ");
+                TextAlert.Show(Types.InsertUnitName);
                 item.Unit = Console.ReadLine();
 
-                Console.Write("Insert ingredient amount: ");
-                int ingredientAmount;
-                int.TryParse(Console.ReadLine(), out ingredientAmount);
-                item.Amount = ingredientAmount;
+                TextAlert.Show(Types.InsertUnitAmount);
+                item.AmountOfUnit = Validation.ValidateInt();
             }
             else
             {
-                Console.WriteLine($"Ingredient {ingredientId} doesnt exist.");
+                TextAlert.Show(Types.IncorrectId);
             }
         }
 
         public void RemoveAndEditAllIngredients(int? id)
         {
-            if (id != null)
+            if (id is not null)
             {
                 int recipeId = (int)id;
                 RemoveAllIngredients(recipeId);
@@ -101,17 +98,16 @@ namespace Cookbook.App.Managers
             }
         }
 
-        private void AddIngredient(Recipe recipe)
+        public void AddIngredient(Recipe recipe)
         {
-            Console.WriteLine("Insert the name of your ingredient: ");
+            TextAlert.Show(Types.InsertNameOfIngredient);
             string name = Console.ReadLine();
 
-            Console.WriteLine("Insert unit of your ingredient: ");
+            TextAlert.Show(Types.InsertUnitName);
             string unit = Console.ReadLine();
 
-            Console.WriteLine("Insert amount of your ingredient: ");
-            int amount;
-            int.TryParse(Console.ReadLine(), out amount);
+            TextAlert.Show(Types.InsertUnitAmount);
+            int amount = Validation.ValidateInt();
 
             int id = _ingredientService.GetLastId() + 1;
             int recipeId = recipe.Id;
@@ -128,22 +124,16 @@ namespace Cookbook.App.Managers
         private void RemoveAllIngredients(int id)
         {
             var recipe = _recipeService.Items.FirstOrDefault(x => x.Id == id);
-            if (recipe != null)
+
+            if (recipe is not null)
             {
                 recipe.Ingredients.Clear();
             }
         }
 
-        private Recipe GetRecipeById(int id)
-        {
-            var recipe = _recipeService.Items.FirstOrDefault(x => x.Id == id);
-            return recipe;
-        }
-
         private Recipe GetRecipeById(int? id)
         {
-            var recipe = _recipeService.Items.FirstOrDefault(x => x.Id == id);
-            return recipe;
+            return _recipeService.Items.FirstOrDefault(x => x.Id == id);
         }
     }
 }

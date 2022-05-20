@@ -12,6 +12,9 @@ namespace Cookbook.App.Abstract
         List<T> GetAllItems();
         int AddItem(T item);
         //int UpdateItem(T item);
-        void RemoveItem(T item);
+        bool RemoveItem(T item);
+        int GetLastId();
+        T GetItemById(int? id);
+        T GetItemById(int id);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Cookbook.App.Common;
 using Cookbook.Domain.Common;
 using Cookbook.Domain.Entity;
+using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,17 +17,20 @@ namespace Cookbook.Domain.Concrete
             InitializeMenu();
         }
 
-        public void DrawMenuViewByMenuType(string menuType)
+        public List<MenuAction> DrawMenuViewByMenuType(string menuType)
         {
             Console.WriteLine();
+            List<MenuAction> menuActions = new List<MenuAction>();
 
             foreach (var menu in Items)
             {
                 if (menu.MenuType == menuType)
                 {
-                    Console.WriteLine($"{menu.Id}. {menu.Name}");
+                    AnsiConsole.Markup($"[bold cornflowerblue]{menu.Id}.[/] [dim steelblue1]{menu.Name}[/]\n");
+                    menuActions.Add(menu);
                 }
             }
+            return menuActions;
         }
 
         private void InitializeMenu()

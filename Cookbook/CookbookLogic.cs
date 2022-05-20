@@ -1,8 +1,10 @@
 ﻿using Cookbook.App.Abstract;
 using Cookbook.App.Concrete;
+using Cookbook.App.Helpers;
 using Cookbook.App.Managers;
 using Cookbook.Domain.Concrete;
 using Cookbook.Domain.Entity;
+using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,10 +33,13 @@ namespace Cookbook
         /// </summary>
         public void Run()
         {
-            bool isRunning = true;
 
-            while (isRunning)
+            recipeService.LoadFromXML();
+
+            while (true)
             {
+                ConsoleText.ShowTitle();
+
                 RecipeManager.ShowRecipes();
 
                 MenuActionService.DrawMenuViewByMenuType("MainMenu");
@@ -48,35 +53,37 @@ namespace Cookbook
                         IngredientManager.AddIngredients(recipeId);
                         break;
                     case '2':
-                        RecipeManager.ShowSelectedRecipeById();
+                        RecipeManager.ShowRecipeById();
                         break;
                     case '3':
-                        RecipeManager.RemoveRecipe();
+                        bool isRemoved = RecipeManager.RemoveRecipeById();
                         break;
                     case '4':
-                        int? id = RecipeManager.EditRecipe();
+                        int id = RecipeManager.CheckIfRecipeExistAndGetId();
                         EditRecipe(id);
                         break;
                     case '5':
-                        isRunning = GoodbyeMessage();
-                        break;
+                        recipeService.SaveToXML();
+                        GoodbyeMessage();
+                        return;
                     default:
+                        Validation.ValidateConsoleClearException();
                         break;
                 }
             }
         }
 
-        private void EditRecipe(int? recipeId)
+        private void EditRecipe(int recipeId)
         {
-            if (recipeId.HasValue)
+            if (recipeId != -1)
             {
-                Console.Clear();
+                Validation.ValidateConsoleClearException();
 
-                bool isRunning = true;
-
-                while (isRunning)
+                while (true)
                 {
-                    RecipeManager.ShowSelectedRecipeById(recipeId);
+                    ConsoleText.ShowTitle();
+
+                    RecipeManager.ShowRecipeById(recipeId);
 
                     MenuActionService.DrawMenuViewByMenuType("EditMenu");
 
@@ -102,55 +109,19 @@ namespace Cookbook
                             RecipeManager.ChangeDescription(recipeId);
                             break;
                         case '6':
-                            isRunning = false;
-                            break;
+                            Validation.ValidateConsoleClearException();
+                            return;
                         default:
+                            Validation.ValidateConsoleClearException();
                             break;
                     }
                 }
             }
         }
 
-        /*private void ShowRecipe()
-        {
-            bool isRunning = true;
-
-            while (isRunning)
-            {
-                RecipeManager.ShowRecipes();
-
-                var operation = Console.ReadKey();
-
-                switch (operation.KeyChar)
-                {
-                    case '1':
-                        RecipeManager.ShowSelectedRecipeById();
-                        break;
-                    case '2':
-                        RecipeManager.RemoveRecipe();
-                        break;
-                    case '3':
-                        isRunning = false;
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-        }*/
-        /*        private Recipe ChangeIngredientsAndDescription(Recipe recipe)
-                {
-                    Console.WriteLine();
-                    recipe = ChangeIngredients(recipe);
-                    recipe = ChangeDescription(recipe);
-
-                    return recipe;
-                }*/
-
-        private bool GoodbyeMessage()
+        private void GoodbyeMessage()
         {
             Console.WriteLine("\nSee you later!");
-            return false;
         }
     }
 }

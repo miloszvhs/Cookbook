@@ -14,8 +14,8 @@ namespace Cookbook
 
 ///RecipeManager
 ////1. AddRecipe
-////2. RemoveRecipe
-////3. EditRecipe
+////2. RemoveRecipeById
+////3. CheckIfRecipeExistAndGetId
 ////4. ShowRecipe
 ////5. ShowRecipes
 ///IngredientManager

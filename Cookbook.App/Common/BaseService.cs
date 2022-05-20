@@ -28,9 +28,9 @@ namespace Cookbook.App.Common
             return Items;
         }
 
-        public void RemoveItem(T item)
+        public bool RemoveItem(T item)
         {
-            Items.Remove(item);
+            return Items.Remove(item);
         }
 
         /*public int UpdateItem(T item)

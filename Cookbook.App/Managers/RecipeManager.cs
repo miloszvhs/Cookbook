@@ -1,7 +1,9 @@
 ﻿using Cookbook.App.Abstract;
 using Cookbook.App.Concrete;
+using Cookbook.App.Helpers;
 using Cookbook.Domain.Concrete;
 using Cookbook.Domain.Entity;
+using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,101 +15,107 @@ namespace Cookbook.App.Managers
     public class RecipeManager
     {
         private readonly MenuActionService _menuActionService;
-        private RecipeService _recipeService;
+        private IService<Recipe> _recipeService;
 
-        public RecipeManager(MenuActionService actionService, RecipeService recipeService)
+        public RecipeManager(MenuActionService actionService, IService<Recipe> recipeService)
         {
             _menuActionService = actionService;
             _recipeService = recipeService;
         }
 
-        public int? EditRecipe()
+        public int CheckIfRecipeExistAndGetId(int id = 0)
         {
-            if (_recipeService.Items.Any())
+            if (AreThereAnyRecipes())
             {
-                Console.WriteLine();
-                Console.Write("Pick recipe id you want to edit: ");
-
-                int recipeId;
-
-                int.TryParse(Console.ReadLine(), out recipeId);
-
-                var recipe = _recipeService.Items.FirstOrDefault(x => x.Id == recipeId);
-
-                if (recipe != null)
+                if (id == 0)
                 {
-                    return recipeId;
+                    TextAlert.Show(Types.InsertId);
+
+                    id = Validation.ValidateInt();
                 }
-                else
+
+                var recipe = _recipeService.Items.FirstOrDefault(x => x.Id == id);
+
+                if (recipe is not null)
                 {
-                    Console.WriteLine($"Recipe with ID {recipeId} doesnt exist.");
-                    return null;
+                    return id;
                 }
+
+                //Needed to paste that here because my tests went wrong
+                //cuz of IOexception of Console.Clear() method.
+                Validation.ValidateConsoleClearException();
+
+                TextAlert.Show(Types.IncorrectId, 1);
+
+                return -1;
             }
-            else
-            {
-                Console.Clear();
-                Console.WriteLine("Your recipes are empty. Add some and then edit them.");
-                return null;
-            }
+
+            Validation.ValidateConsoleClearException();
+
+            TextAlert.Show(Types.EmptyListOfRecipes, 1);
+
+            return -1;
         }
 
         public int AddRecipe()
         {
-            Console.WriteLine("\nInsert your recipe name: ");
+            TextAlert.Show(Types.InsertNameOfRecipe);
             string name = Console.ReadLine();
 
-            Console.WriteLine("Insert your description of the recipe: ");
+            TextAlert.Show(Types.InsertDescription);
             string description = Console.ReadLine();
 
             int id = _recipeService.GetLastId() + 1;
 
-            Recipe recipe = new Recipe() { Id = id, Name = name, Description = description };
+            Recipe recipe = new Recipe(id, name, description);
 
             int recipeId = _recipeService.AddItem(recipe);
 
             return recipeId;
         }
 
-        public void RemoveRecipe()
+        public bool RemoveRecipeById(int id = 0)
         {
             Console.WriteLine();
 
             if (AreThereAnyRecipes())
             {
-                Console.Write("Insert the id of the recipe you want to delete: ");
-
-                int recipeId;
-                int.TryParse(Console.ReadLine(), out recipeId);
-
-                var item = _recipeService.Items.FirstOrDefault(x => x.Id == recipeId);
-
-                if (item != null)
+                if (id == 0)
                 {
-                    _recipeService.RemoveItem(item);
+                    TextAlert.Show(Types.InsertId);
+
+                    id = Validation.ValidateInt();
+                }
+
+                var item = _recipeService.GetItemById(id);
+
+                if (item is not null)
+                {
+                    Validation.ValidateConsoleClearException();
+
+                    return _recipeService.RemoveItem(item);
                 }
                 else
                 {
-                    Console.Clear();
-                    Console.WriteLine($"{recipeId} doesnt exist.");
+                    Validation.ValidateConsoleClearException();
+                    TextAlert.Show(Types.IncorrectId, 1);
+                    return false;
                 }
             }
-            else
-            {
-                Console.Clear();
-                Console.WriteLine("Your recipes are empty. Try to add some and then delete them.");
-            }
+            Validation.ValidateConsoleClearException();
+            TextAlert.Show(Types.EmptyListOfRecipes, 1);
+
+            return false;
         }
 
-        public void ShowSelectedRecipeById(int? id = null)
+        public void ShowRecipeById(int? id = null)
         {
             if (AreThereAnyRecipes())
             {
                 if (!id.HasValue)
                 {
-                    Console.Write("\nInsert your recipe ID:");
-                    int recipeId;
-                    int.TryParse(Console.ReadLine(), out recipeId);
+                    TextAlert.Show(Types.InsertId);
+                    int recipeId = Validation.ValidateInt();
                     Console.Clear();
                     ShowRecipe(recipeId);
                 }
@@ -118,39 +126,54 @@ namespace Cookbook.App.Managers
             }
             else
             {
-                Console.Clear();
-                Console.WriteLine("Your recipes are empty. Try to add some.");
+                Validation.ValidateConsoleClearException();
+                TextAlert.Show(Types.EmptyListOfRecipes, 1);
             }
         }
 
-        public void ShowRecipes()
+        public string[] ShowRecipes()
         {
+            List<string> textOutput = new List<string>();
+
+            var table = new Table();
+
+            table.AddColumn("Number");
+            table.AddColumn(new TableColumn("Name").RightAligned());
+            table.AddColumn(new TableColumn("ID").RightAligned());
+
             if (_recipeService.Items.Any())
             {
                 foreach (var (item, index) in _recipeService.Items.Select((x, i) => (x, i)))
                 {
-                    Console.WriteLine($"{index + 1}. {item.Name} ID:{item.Id}");
+                    table.AddRow($"{index + 1}", $"{item.Name}", $"{item.Id}");
+                    textOutput.Add($"{index + 1}. {item.Name} ID:{item.Id}");
                 }
             }
+            AnsiConsole.Write(table);
+
+            return textOutput.ToArray();
         }
 
-        public void ChangeDescription(int? id)
+        public string ChangeDescription(int? id, string newDescription = "empty")
         {
             var recipe = GetRecipeById(id);
 
-            Console.WriteLine("\nInsert your new description: ");
+            if (newDescription is "empty")
+            {
+                TextAlert.Show(Types.InsertDescription);
+                newDescription = Console.ReadLine();
+            }
 
-            recipe.Description = Console.ReadLine();
+            recipe.Description = newDescription;
+
+            Validation.ValidateConsoleClearException();
+
+            return newDescription;
         }
 
         public bool AreThereAnyRecipes()
         {
             return _recipeService.GetAllItems().Any();
-        }
-
-        private Recipe GetRecipeById(int id)
-        {
-            return _recipeService.GetItemById(id);
         }
 
         private Recipe GetRecipeById(int? id)
@@ -162,20 +185,43 @@ namespace Cookbook.App.Managers
         {
             var recipe = _recipeService.GetItemById(id);
 
-            if (recipe != null)
+            if (recipe is not null)
             {
-                Console.WriteLine(recipe.Name + ":");
+                var rule = new Rule(recipe.Name);
+                rule.Alignment = Justify.Left;
+                AnsiConsole.Write(rule);
+
+                var table = new Table();
+
+                table.AddColumn("Number");
+                table.AddColumn("Name");
+                table.AddColumn(new TableColumn("AmountOfUnit").RightAligned());
+                table.AddColumn(new TableColumn("Unit").RightAligned());
+                table.AddColumn(new TableColumn("ID").RightAligned());
+
+                
                 foreach (var (ingredient, index) in recipe.Ingredients.Select((x, i) => (x, i)))
                 {
-                    Console.WriteLine($"{index + 1}. {ingredient.Name}\t(amount)- {ingredient.Amount}\t(unit): {ingredient.Unit}\t| ID:{ingredient.Id}");
+                    table.AddRow($"{index + 1}", $"{ingredient.Name}", $"{ingredient.AmountOfUnit}", $"{ingredient.Unit}", $"{ingredient.Id}");
                 }
-                Console.WriteLine("\nDescription: ");
-                Console.WriteLine(recipe.Description + "\n");
+                AnsiConsole.Write(table);
+
+                table = new Table();
+                table.AddColumn("Description");
+                table.AddRow(recipe.Description);
+                table.Width(50);
+                AnsiConsole.Write(table);
             }
             else
             {
-                Console.WriteLine($"{id} doesnt exist.");
+                TextAlert.Show(Types.IncorrectId, 1);
             }
+        }
+
+        public Recipe GetItemById(int id)
+        {
+            var recipe = _recipeService.GetItemById(id);
+            return recipe;
         }
     }
 }
